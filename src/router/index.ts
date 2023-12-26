@@ -21,5 +21,11 @@ const router = createRouter({
   history: createWebHistory(process.env.BASE_URL),
   routes
 })
+router.beforeEach((to,form,next)=>{
+
+  if(to.path=='/login'){
+    return next()
+  }
+})
 
 export default router
