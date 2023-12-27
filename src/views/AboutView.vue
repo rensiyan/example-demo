@@ -1,306 +1,676 @@
 <template>
-  <div>
-    <vxe-grid ref='xGrid' v-bind="gridOptions" v-on="gridEvent"></vxe-grid>
-  </div>
-</template>
-
-<script lang="ts" setup>
-import { onMounted, reactive, ref } from 'vue'
-import { VXETable, VxeGridInstance, VxeGridListeners, VxeGridProps } from 'vxe-table'
-import XEUtils from 'xe-utils'
-
-interface RowVO {
-  [key: string]: any
-}
-
-const serveApiUrl = 'https://api.vxetable.cn/demo'
-
-const xGrid = ref<VxeGridInstance<RowVO>>()
-
-const gridOptions = reactive<VxeGridProps<RowVO>>({
-  border: true,
-  showHeaderOverflow: true,
-  showOverflow: true,
-  keepSource: true,
-  id: 'full_edit_1',
-  height: 600,
-  rowConfig: {
-    keyField: 'id',
-    isHover: true
-  },
-  columnConfig: {
-    resizable: true
-  },
-  customConfig: {
-    storage: true,
-    checkMethod ({ column }) {
-      if (['nickname', 'role'].includes(column.field)) {
-        return false
-      }
-      return true
-    }
-  },
-  printConfig: {
-    columns: [
-      { field: 'name' },
-      { field: 'email' },
-      { field: 'nickname' },
-      { field: 'age' },
-      { field: 'amount' }
-    ]
-  },
-  sortConfig: {
-    trigger: 'cell',
-    remote: true
-  },
-  filterConfig: {
-    remote: true
-  },
-  pagerConfig: {
-    enabled: true,
-    pageSize: 10,
-    pageSizes: [5, 10, 15, 20, 50, 100, 200, 500, 1000]
-  },
-  formConfig: {
-    titleWidth: 100,
-    titleAlign: 'right',
-    items: [
-      { field: 'name', title: 'app.body.label.name', span: 8, titlePrefix: { message: 'app.body.valid.rName', icon: 'vxe-icon-question-circle-fill' }, itemRender: { name: '$input', props: { placeholder: '请输入名称' } } },
-      { field: 'email', title: '邮件', span: 8, titlePrefix: { useHTML: true, message: '点击链接：<a class="link" href="https://vxetable.cn" target="_blank">vxe-table官网</a>', icon: 'vxe-icon-question-circle-fill' }, itemRender: { name: '$input', props: { placeholder: '请输入邮件' } } },
-      { field: 'nickname', title: '昵称', span: 8, itemRender: { name: '$input', props: { placeholder: '请输入昵称' } } },
-      { field: 'role', title: '角色', span: 8, folding: true, itemRender: { name: '$input', props: { placeholder: '请输入角色' } } },
-      { field: 'sex', title: '性别', span: 8, folding: true, titleSuffix: { message: '注意，必填信息！', icon: 'vxe-icon-question-circle-fill' }, itemRender: { name: '$select', options: [] } },
-      { field: 'age', title: '年龄', span: 8, folding: true, itemRender: { name: '$input', props: { type: 'number', min: 1, max: 120, placeholder: '请输入年龄' } } },
-      { span: 24, align: 'center', collapseNode: true, itemRender: { name: '$buttons', children: [{ props: { type: 'submit', content: 'app.body.label.search', status: 'primary' } }, { props: { type: 'reset', content: 'app.body.label.reset' } }] } }
-    ]
-  },
-  toolbarConfig: {
-    buttons: [
-      { code: 'insert_actived', name: '新增' },
-      { code: 'delete', name: '直接删除' },
-      { code: 'mark_cancel', name: '删除/取消' },
-      { code: 'save', name: 'app.body.button.save', status: 'success' }
-    ],
-    refresh: true, // 显示刷新按钮
-    import: true, // 显示导入按钮
-    export: true, // 显示导出按钮
-    print: true, // 显示打印按钮
-    zoom: true, // 显示全屏按钮
-    custom: true // 显示自定义列按钮
-  },
-  proxyConfig: {
-    seq: true, // 启用动态序号代理，每一页的序号会根据当前页数变化
-    sort: true, // 启用排序代理，当点击排序时会自动触发 query 行为
-    filter: true, // 启用筛选代理，当点击筛选时会自动触发 query 行为
-    form: true, // 启用表单代理，当点击表单提交按钮时会自动触发 reload 行为
-    props: {
-      // 对应响应结果 Promise<{ result: [], page: { total: 100 } }>
-      result: 'result', // 配置响应结果列表字段
-      total: 'page.total' // 配置响应结果总页数字段
-    },
-    // 只接收Promise，具体实现自由发挥
-    ajax: {
-      // 当点击工具栏查询按钮或者手动提交指令 query或reload 时会被触发
-      query: ({ page, sorts, filters, form }) => {
-        const queryParams: any = Object.assign({}, form)
-        // 处理排序条件
-        const firstSort = sorts[0]
-        if (firstSort) {
-          queryParams.sort = firstSort.field
-          queryParams.order = firstSort.order
-        }
-        // 处理筛选条件
-        filters.forEach(({ field, values }) => {
-          queryParams[field] = values.join(',')
-        })
-        return fetch(`${serveApiUrl}/api/pub/page/list/${page.pageSize}/${page.currentPage}?${XEUtils.serialize(queryParams)}`).then(response => response.json())
-      },
-      // 当点击工具栏删除按钮或者手动提交指令 delete 时会被触发
-      delete: ({ body }) => {
-        return fetch(`${serveApiUrl}/api/pub/save`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(response => response.json())
-      },
-      // 当点击工具栏保存按钮或者手动提交指令 save 时会被触发
-      save: ({ body }) => {
-        return fetch(`${serveApiUrl}/api/pub/save`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(response => response.json())
-      }
-    }
-  },
-  columns: [
-    { type: 'checkbox', title: 'ID', width: 120 },
-    { field: 'name', title: 'Name', sortable: true, titlePrefix: { message: '名称必须填写！' }, editRender: { name: 'input', attrs: { placeholder: '请输入名称' } } },
-    {
-      field: 'role',
-      title: 'Role',
-      sortable: true,
-      titlePrefix: { useHTML: true, content: '点击链接：<a class="link" href="https://vxetable.cn" target="_blank">vxe-table官网</a>' },
-      filters: [
-        { label: '前端开发', value: '前端' },
-        { label: '后端开发', value: '后端' },
-        { label: '测试', value: '测试' },
-        { label: '程序员鼓励师', value: '程序员鼓励师' }
-      ],
-      filterMultiple: false,
-      editRender: { name: 'input', attrs: { placeholder: '请输入角色' } }
-    },
-    { field: 'email', title: 'Email', width: 160, editRender: { name: '$input', props: { placeholder: '请输入邮件' } } },
-    { field: 'nickname', title: 'Nickname', editRender: { name: 'input', attrs: { placeholder: '请输入昵称' } } },
-    {
-      field: 'sex',
-      title: 'Sex',
-      filters: [
-        { label: '男', value: '1' },
-        { label: '女', value: '0' }
-      ],
-      editRender: { name: '$select', options: [], props: { placeholder: '请选择性别' } }
-    },
-    { field: 'age', title: 'Age', visible: false, sortable: true, editRender: { name: '$input', props: { type: 'number', min: 1, max: 120 } } },
-    {
-      field: 'amount',
-      title: 'Amount',
-      formatter ({ cellValue }) {
-        return cellValue ? `￥${XEUtils.commafy(XEUtils.toNumber(cellValue), { digits: 2 })}` : ''
-      },
-      editRender: { name: '$input', props: { type: 'float', digits: 2, placeholder: '请输入数值' } }
-    },
-    {
-      field: 'updateDate',
-      title: 'Update Date',
-      width: 160,
-      visible: false,
-      sortable: true,
-      formatter ({ cellValue }) {
-        return XEUtils.toDateString(cellValue, 'yyyy-MM-dd HH:ss:mm')
-      }
-    },
-    {
-      field: 'createDate',
-      title: 'Create Date',
-      width: 160,
-      visible: false,
-      sortable: true,
-      formatter ({ cellValue }) {
-        return XEUtils.toDateString(cellValue, 'yyyy-MM-dd')
-      }
-    }
-  ],
-  importConfig: {
-    remote: true,
-    types: ['xlsx'],
-    modes: ['insert'],
-    // 自定义服务端导入
-    importMethod ({ file }) {
-      const $grid = xGrid.value
-      const formBody = new FormData()
-      formBody.append('file', file)
-      return fetch(`${serveApiUrl}/api/pub/import`, { method: 'POST', body: formBody }).then(response => response.json()).then(data => {
-        VXETable.modal.message({ content: `成功导入 ${data.result.insertRows} 条记录！`, status: 'success' })
-        // 导入完成，刷新表格
-        if ($grid) {
-          $grid.commitProxy('query')
-        }
-      }).catch(() => {
-        VXETable.modal.message({ content: '导入失败，请检查数据是否正确！', status: 'error' })
-      })
-    }
-  },
-  exportConfig: {
-    remote: true,
-    types: ['xlsx'],
-    modes: ['current', 'selected', 'all'],
-    // 自定义服务端导出
-    exportMethod ({ options }) {
-      const $grid = xGrid.value
-      if ($grid) {
-        const proxyInfo = $grid.getProxyInfo()
-        // 传给服务端的参数
-        const body = {
-          filename: options.filename,
-          sheetName: options.sheetName,
-          isHeader: options.isHeader,
-          original: options.original,
-          mode: options.mode,
-          pager: proxyInfo ? proxyInfo.pager : null,
-          ids: options.mode === 'selected' ? options.data.map((item) => item.id) : [],
-          fields: options.columns.map((column) => {
-            return {
-              field: column.field,
-              title: column.title
-            }
-          })
-        }
-        // 开始服务端导出
-        return fetch(`${serveApiUrl}/api/pub/export`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(response => response.json()).then(data => {
-          if (data.id) {
-            VXETable.modal.message({ content: '导出成功，开始下载', status: 'success' })
-            // 读取路径，请求文件
-            fetch(`${serveApiUrl}/api/pub/export/download/${data.id}`).then(response => {
-              response.blob().then(blob => {
-                // 开始下载
-                VXETable.saveFile({ filename: '导出数据', type: 'xlsx', content: blob })
-              })
-            })
-          }
-        }).catch(() => {
-          VXETable.modal.message({ content: '导出失败！', status: 'error' })
-        })
-      }
-      return Promise.resolve()
-    }
-  },
-  checkboxConfig: {
-    labelField: 'id',
-    reserve: true,
-    highlight: true,
-    range: true
-  },
-  editRules: {
-    name: [
-      { required: true, message: 'app.body.valid.rName' },
-      { min: 3, max: 50, message: '名称长度在 3 到 50 个字符' }
-    ],
-    email: [
-      { required: true, message: '邮件必须填写' }
-    ],
-    role: [
-      { required: true, message: '角色必须填写' }
-    ]
-  },
-  editConfig: {
-    trigger: 'click',
-    mode: 'row',
-    showStatus: true
-  }
-})
-
-const gridEvent: VxeGridListeners<RowVO> = {
-  proxyQuery () {
-    console.log('数据代理查询事件')
-  },
-  proxyDelete () {
-    console.log('数据代理删除事件')
-  },
-  proxySave () {
-    console.log('数据代理保存事件')
-  }
-}
-
-onMounted(() => {
-  const sexList = [
-    { label: '女', value: '0' },
-    { label: '男', value: '1' }
-  ]
-  const { formConfig, columns } = gridOptions
-  if (columns) {
-    const sexColumn = columns[5]
-    if (sexColumn && sexColumn.editRender) {
-      sexColumn.editRender.options = sexList
-    }
-  }
-  if (formConfig && formConfig.items) {
-    const sexItem = formConfig.items[4]
-    if (sexItem && sexItem.itemRender) {
-      sexItem.itemRender.options = sexList
-    }
-  }
-})
-</script>
+  <!-- <div id="app-Contain"> -->
+     <div class="calender-class">
+       <div class="batch-add-Work-class">
+         <el-button class="add-btn-class" size="small" type="primary" @click="batchAddDrawer = true">批量排班</el-button>
+         <el-button class="add-btn-class" size="small" type="primary" @click="changeDateDrawer = true">日期选择</el-button>
+       </div>
+       <el-calendar>
+         <!-- 这里使用的是 2.5 slot 语法，对于新项目请使用 2.6 slot 语法-->
+         <template v-slot:dateCell="{  data }" >
+           <div class="day-content-class">
+             <template v-if="viewDate[data.day]">
+               <div class="header-class">
+                 <div class="day-class">
+                   {{
+                     data.day
+                       .split("-")
+                       .slice(1)
+                       .join("-")
+                   }}
+                 </div>
+                 <div class="handle-class">
+                   <el-button icon="el-icon-edit" size="mini" circle @click="handleWorkInfo(viewDate[data.day], data)">
+                   </el-button>
+                 </div>
+               </div>
+               <div class="paiban-class">
+                 <div v-for="(dayValue, i) in viewDate[data.day]" :class="[
+                     'draggable-div' + i,
+                     'each-paiban-class',
+                     setWorkClass(dayValue.sort),
+                   ]" draggable="true" @dragstart="handleDragStart($event, dayValue, data.day)"
+                   @dragover.prevent="handleDragOver($event)" @dragenter="handleDragEnter($event, dayValue)"
+                   @dragend="handleDragEnd()"
+                  :key="i"
+                   >
+                   <i :class="[
+                       setIconClass(dayValue.shiftName),
+                       'paiban-icon-class',
+                     ]"></i>
+                   <div class="paiban-name-class">{{ dayValue.groupName }}</div>
+                 </div>
+               </div>
+             </template>
+             <template v-else>
+               <div class="header-class">
+                 <div class="day-class">
+                   {{
+                     data.day
+                       .split("-")
+                       .slice(1)
+                       .join("-")
+                   }}
+                 </div>
+                 <div class="handle-class">
+                   <el-button icon="el-icon-edit" size="mini" circle @click="handleWorkInfo(viewDate[data.day], data)">
+                   </el-button>
+                 </div>
+               </div>
+               <div class="no-work-class">
+                 <div class="icon-class"><i class="el-icon-date"></i></div>
+                 <div class="tips-class">
+                   暂无排班
+                 </div>
+               </div>
+             </template>
+           </div>
+         </template>
+       </el-calendar>
+     </div>
+    <!-- 批量排班抽屉弹窗 -->
+     <div>
+       <el-drawer title="批量排班" v-model:visible="batchAddDrawer" size="40%">
+         <div class="demo-drawer__content">
+           <el-form :model="batchAddForm">
+             <el-form-item label="排班日期" label-width="80px">
+               <el-date-picker v-model="batchAddForm.batchDate" value-format="yyyy-MM-dd" type="daterange"
+                 range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期">
+               </el-date-picker>
+             </el-form-item>
+             <el-button type="primary" icon="el-icon-plus" circle @click="addDomain"></el-button>
+             <el-form-item label-width="80px" v-for="(data, index) in batchAddForm.classData"
+               :label="'排班' + (index + 1) + '：'" :key="data.key">
+               <p></p>
+               <span>班次：</span>
+               <el-radio-group v-model="data.shiftName">
+                 <el-radio label="早">早</el-radio>
+                 <el-radio label="中">中</el-radio>
+                 <el-radio label="晚">晚</el-radio>
+               </el-radio-group>
+               <p></p>
+               <span>班别：</span>
+               <el-radio-group class="margin-left:80px" v-model="data.groupName">
+                 <el-radio label="甲">甲</el-radio>
+                 <el-radio label="乙">乙</el-radio>
+                 <el-radio label="丙">丙</el-radio>
+               </el-radio-group>
+               <el-button class="remove-domain-class" @click.prevent="removeDomain(data)" type="danger"
+                 icon="el-icon-delete" circle></el-button>
+             </el-form-item>
+           </el-form>
+         </div>
+         <div class="demo-drawer__footer">
+           <el-button @click="handleBatchClose">取 消</el-button>
+           <el-button type="primary" @click="batchAddWork()">
+             确定
+           </el-button>
+         </div>
+       </el-drawer>
+     </div>
+     <!-- 单独排班 -->
+     <div>
+       <el-drawer :title="'【' + hanleDay.day + '】排班'" v-model:visible="drawer" size="40%">
+         <div class="add-work-class">
+           <el-button class="add-btn-class" type="primary" @click="innerDrawer = true">添加</el-button>
+           <el-drawer title="添加排班" :append-to-body="true" :before-close="handleClose" v-model:visible="innerDrawer">
+             <div class="demo-drawer__content">
+               <el-form :model="addForm">
+                 <el-form-item label="班次：" label-width="80px">
+                   <el-radio-group v-model="addForm.shiftName">
+                     <el-radio label="早">早</el-radio>
+                     <el-radio label="中">中</el-radio>
+                     <el-radio label="晚">晚</el-radio>
+                   </el-radio-group>
+                 </el-form-item>
+                 <el-form-item label="班别：" label-width="80px">
+                   <el-radio-group v-model="addForm.groupName">
+                     <el-radio label="甲">甲</el-radio>
+                     <el-radio label="乙">乙</el-radio>
+                     <el-radio label="丙">丙</el-radio>
+                   </el-radio-group>
+                 </el-form-item>
+               </el-form>
+             </div>
+             <div class="demo-drawer__footer">
+               <el-button @click="handleClose">取 消</el-button>
+               <el-button type="primary" @click="addWork()">
+                 确定
+               </el-button>
+             </div>
+           </el-drawer>
+         </div>
+         <el-table :data="workInfoList">
+           <el-table-column property="date" label="日期" width="100"></el-table-column>
+           <el-table-column property="shiftName" label="班次"></el-table-column>
+           <el-table-column property="groupName" label="班别"></el-table-column>
+           <el-table-column property="startTime" label="开始时间" width="160"></el-table-column>
+           <el-table-column property="endTime" label="结束时间" width="160"></el-table-column>
+           <el-table-column fixed="right" label="操作" width="120">
+             <template v-slot="scope">
+               <el-button @click.prevent="deleteRow(scope, workInfoList)" type="text" size="small">
+                 移除
+               </el-button>
+             </template>
+           </el-table-column>
+         </el-table>
+       </el-drawer>
+     </div>
+     <!-- 日期选择 -->
+     <div>
+       <el-drawer title="日期选择" v-model:visible="changeDateDrawer" class="change-date-drawer-class" size="30%">
+         <el-calendar>
+           <!-- 这里使用的是 2.5 slot 语法，对于新项目请使用 2.6 slot 语法-->
+           <template v-slot:dateCell="{ date, data }" >
+             <div :class="['day-content-class',setDisabled(data.day)]">
+               <template>
+                 <div class="header-class no-drop-class" v-show="data.type === 'current-month'"
+                   @click="selectDate(date,data)">
+                   <div class="day-class">
+                     {{
+                     data.day
+                       .split("-")
+                       .slice(1)
+                       .join("-")
+                   }}
+                   </div>
+                   <div :key="data.day" :id="data.day">{{ initHolidayDate(data) }}</div>
+                 </div>
+               </template>
+             </div>
+           </template>
+         </el-calendar>
+         <div style="margin:10px">
+           <div>选中的日期：</div>
+           <span v-for="(day,i) in currentDate" :key="i">
+             {{day.date}} 
+           </span>
+         </div>
+       </el-drawer>
+     </div>
+   <!-- </div> -->
+ </template>
+  
+ <script>
+   import moment from "moment";
+   export default {
+     data() {
+       return {
+         viewDate: {
+           "2023-10-10": [{
+               id: "2023-10-10" + Math.random(1000),
+               ruleName: "三班两运转",
+               shiftName: "早",
+               groupName: "甲",
+               startTime: "2023-10-10 08:30",
+               endTime: "2023-10-10 20:30",
+               isNotHoliday: 0,
+               classId: 1,
+               date: "2023-10-10",
+               sort: 1,
+             },
+             {
+               id: "2023-10-10" + Math.random(1000),
+               ruleName: "三班两运转",
+               shiftName: "中",
+               groupName: "乙",
+               startTime: "2023-10-10 20:30",
+               endTime: "2023-10-08 08:30",
+               isNotHoliday: 0,
+               classId: 1,
+               date: "2023-10-10",
+               sort: 2,
+             },
+           ],
+           "2023-10-08": [{
+               id: "2023-10-08" + Math.random(1000),
+               ruleName: "三班两运转",
+               shiftName: "早",
+               groupName: "甲",
+               startTime: "2023-10-08 08:30",
+               endTime: "2023-10-08 20:30",
+               isNotHoliday: 0,
+               classId: 1,
+               date: "2023-10-08",
+               sort: 1,
+             },
+             {
+               id: "2023-10-08" + Math.random(1000),
+               ruleName: "三班两运转",
+               shiftName: "中",
+               groupName: "乙",
+               startTime: "2023-10-08 08:30",
+               endTime: "2023-10-08 20:30",
+               isNotHoliday: 0,
+               classId: 1,
+               date: "2023-10-08",
+               sort: 2,
+             },
+             {
+               id: "2023-10-08" + Math.random(1000),
+               ruleName: "三班两运转",
+               shiftName: "晚",
+               groupName: "丙",
+               startTime: "2023-10-08 08:30",
+               endTime: "2023-10-09 20:30",
+               isNotHoliday: 0,
+               classId: 1,
+               date: "2023-10-08",
+               sort: 3,
+             },
+           ],
+         },
+         thisDay: null,
+         thisDayWork: null,
+         ending: null,
+         dragging: null,
+  
+         batchAddDrawer: false,
+         // 批量添加
+         batchAddForm: {
+           batchDate: [],
+           classData: [{
+             shiftName: "早",
+             groupName: "甲",
+           }, ],
+         },
+         // 单日添加
+         addForm: {
+           shiftName: "早",
+           groupName: "甲",
+           sort: 1,
+         },
+         drawer: false,
+         innerDrawer: false,
+         hanleDay: "",
+         workInfoList: [],
+  
+         // 时间范围
+         dateRange: ['2023-10-1', '2023-10-20'],
+         changeDateDrawer: false,
+         // 点击月中已选中的日期
+         currentDate: [],
+       };
+     },
+     watch: {
+       "addForm.shiftName"(newVal, oldVal) {
+         switch (newVal) {
+           case "早":
+             this.addForm.sort = 1;
+             break;
+           case "中":
+             this.addForm.sort = 2;
+             break;
+           case "晚":
+             this.addForm.sort = 3;
+             break;
+           default:
+             break;
+         }
+       },
+     },
+     computed: {},
+     methods: {
+       handleDragStart(e, item, thisDay) {
+         this.dragging = item;
+         this.thisDay = thisDay;
+         this.thisDayWork = this.viewDate[thisDay];
+       },
+       handleDragEnd() {
+         if (this.ending.id === this.dragging.id) {
+           return;
+         }
+         const newItems = [...this.thisDayWork];
+         const src = newItems.indexOf(this.dragging);
+         const dst = newItems.indexOf(this.ending);
+         newItems.splice(src, 1, ...newItems.splice(dst, 1, newItems[src]));
+         this.$set(this.viewDate, this.thisDay, newItems);
+         this.$nextTick(() => {
+           this.dragging = null;
+           this.ending = null;
+         });
+         console.log(
+           "🚀 ~ file: App.vue:286 ~ handleDragEnd ~ this.viewDate:",
+           this.viewDate
+         );
+       },
+       handleDragOver(e) {
+         // 首先把div变成可以放置的元素，即重写dragenter/dragover
+         e.dataTransfer.dropEffect = "move"; // e.dataTransfer.dropEffect="move";//在dragenter中针对放置目标来设置!
+       },
+       handleDragEnter(e, item) {
+         e.dataTransfer.effectAllowed = "move"; // 为需要移动的元素设置dragstart事件
+         this.ending = item;
+       },
+       // 获取时间范围中的所有日期
+       enumerateDaysBetweenDates(startDate, endDate) {
+         const daysList = [];
+         const SDate = moment(startDate);
+         const EDate = moment(endDate);
+         daysList.push(SDate.format("YYYY-MM-DD"));
+         while (SDate.add(1, "days").isBefore(EDate)) {
+           daysList.push(SDate.format("YYYY-MM-DD"));
+         }
+         daysList.push(EDate.format("YYYY-MM-DD"));
+         return daysList;
+       },
+       setSortValue(value) {
+         let sort = 1;
+         switch (value) {
+           case "早":
+             sort = 1;
+             break;
+           case "中":
+             sort = 2;
+             break;
+           case "晚":
+             sort = 3;
+             break;
+           default:
+             break;
+         }
+         return sort;
+       },
+       setWorkClass(value) {
+         let classValue = "no-work-class";
+         switch (value) {
+           case 1:
+             classValue = "zao-work-class";
+             break;
+           case 2:
+             classValue = "wan-work-class";
+             break;
+           case 3:
+             classValue = "ye-work-class";
+             break;
+           default:
+             break;
+         }
+         return classValue;
+       },
+       setIconClass(value) {
+         let classValue = "el-icon-sunrise-1";
+         switch (value) {
+           case "早":
+             classValue = "el-icon-sunrise-1";
+             break;
+           case "中":
+             classValue = "el-icon-sunny";
+             break;
+           case "晚":
+             classValue = "el-icon-moon";
+             break;
+           default:
+             break;
+         }
+         return classValue;
+       },
+       // 编辑单日排班
+       handleWorkInfo(info, data) {
+         this.hanleDay = data;
+         this.drawer = true;
+         if (info && info.length > 0) {
+           this.workInfoList = info;
+         } else {
+           this.workInfoList = [];
+         }
+       },
+       handleClose() {
+         this.innerDrawer = false;
+       },
+       // 添加单日排班
+       addWork() {
+         const info = {
+           id: this.hanleDay.day + Math.random(1000),
+           ruleName: "三班两运转",
+           shiftName: this.addForm.shiftName,
+           groupName: this.addForm.groupName,
+           startTime: this.hanleDay.day + " 08:30",
+           endTime: this.hanleDay.day + " 20:30",
+           isNotHoliday: 0,
+           classId: 1,
+           date: this.hanleDay.day,
+           sort: this.addForm.sort,
+         };
+         this.workInfoList.push(info);
+         this.$set(this.viewDate, this.hanleDay.day, this.workInfoList);
+         this.innerDrawer = false;
+       },
+       // 清除单日排班数据
+       deleteRow(row, tableData) {
+         const index = row.$index;
+         tableData.splice(index, 1);
+         if (tableData.length > 0) {
+           this.$set(this.viewDate, this.hanleDay.day, tableData);
+         } else {
+           this.$delete(this.viewDate, this.hanleDay.day);
+         }
+       },
+       addDomain() {
+         this.batchAddForm.classData.push({
+           shiftName: "早",
+           groupName: "甲",
+           key: Date.now(),
+         });
+       },
+       removeDomain(item) {
+         if (this.batchAddForm.classData.length > 1) {
+           const index = this.batchAddForm.classData.indexOf(item);
+           if (index !== -1) {
+             this.batchAddForm.classData.splice(index, 1);
+           }
+         } else {
+           this.$message({
+             message: "请至少安排一个排班",
+             type: "error",
+           });
+         }
+       },
+       // 批量添加排班数据
+       batchAddWork() {
+         const dateList = this.batchAddForm.batchDate;
+         const classList = this.batchAddForm.classData;
+         let list = [];
+         if (dateList && dateList.length > 0) {
+           list = this.enumerateDaysBetweenDates(dateList[0], dateList[1]);
+         }
+         list.forEach((item) => {
+           const workList = [];
+           classList.forEach((work) => {
+             const info = {
+               id: item + Math.random(1000),
+               ruleName: "三班两运转",
+               shiftName: work.shiftName,
+               groupName: work.groupName,
+               startTime: item + " 08:30",
+               endTime: item + " 20:30",
+               isNotHoliday: 0,
+               classId: 1,
+               date: item,
+               sort: this.setSortValue(work.shiftName),
+             };
+             workList.push(info);
+           });
+           this.$set(this.viewDate, item, workList);
+         });
+  
+         this.batchAddDrawer = false;
+         this.batchAddForm = {
+           batchDate: [],
+           classData: [{
+             shiftName: "早",
+             groupName: "甲",
+           }, ],
+         };
+       },
+       handleBatchClose() {
+         this.batchAddDrawer = false;
+       },
+  
+       //初始化已选中的日期
+       initHolidayDate(data) {
+         for (const i in this.currentDate) {
+           if (data.day === this.currentDate[i].date) {
+             data.isSelected = true;
+             // return '✔️'
+             return '✔'
+           }
+         }
+       },
+       //点击选中或取消选中
+       selectDate(date, data) {
+         console.log("🚀 ~ file: App.vue:510 ~ selectDate ~ data:", data)
+         const day = date.getDate();
+         const span = document.getElementById(data.day);
+         if (span.innerText) {
+           span.innerText = ''
+           for (const i in this.currentDate) {
+             if (day === this.currentDate[i].day) {
+               this.currentDate.splice(i, 1)
+             }
+           }
+         } else {
+           span.innerText = '✔';
+           this.currentDate.push({
+             day: day,
+             date: data.day
+           })
+         }
+         console.log("this.currentDate:", this.currentDate)
+       },
+       // 设置禁用值
+       setDisabled(date) {
+         // console.log("🚀 ~ file: App.vue:537 ~ setDisabled ~ date:", date)
+         if (moment(date).isBefore(this.dateRange[0]) || moment(date).isAfter(this.dateRange[1])) {
+           return 'disabled-date-class'
+         }
+       }
+     },
+   };
+ </script>
+  
+ <style>
+   #Contain {
+     width: 100%;
+     height: 90%;
+     margin: 0;
+     padding: 0;
+   }
+  
+   .el-table__fixed-right {
+     height: 100% !important;
+   }
+  
+   .calender-class {
+     width: 100%;
+     height: 100%;
+   }
+  
+   .is-selected {
+     color: #1989fa;
+   }
+  
+   .el-calendar__body {
+     height: 85vh;
+   }
+  
+   .el-calendar-table {
+     height: 100%;
+   }
+  
+   .el-calendar-day {
+     height: 100% !important;
+   }
+  
+   .day-content-class {
+     height: 100px;
+     display: flex;
+     flex-direction: column;
+   }
+  
+   .header-class {
+     flex: 1;
+     display: flex;
+     height: 28px;
+     flex-direction: row;
+     justify-content: space-between;
+   }
+  
+   .day-class {
+     flex: 4;
+   }
+  
+   .handle-class {
+     flex: 1;
+   }
+  
+   .paiban-class {
+     flex: 4;
+     display: flex;
+     flex-direction: row;
+     justify-content: center;
+     align-items: flex-end;
+   }
+  
+   .paiban-icon-class {
+     font-size: 22px;
+     margin: 8px 0 10px 0;
+   }
+  
+   .paiban-name-class {
+     padding-top: 10px;
+   }
+  
+   .each-paiban-class {
+     text-align: center;
+     max-width: 50px;
+     margin: 5px 5px 0 5px;
+     border-radius: 5px;
+     padding: 0 0 5px 0;
+     flex: 1;
+   }
+  
+   .zao-work-class {
+     background-color: #d9ffd9;
+     color: #11be11;
+   }
+  
+   .wan-work-class {
+     background-color: #fff0bd;
+     color: #fccb2c;
+   }
+  
+   .ye-work-class {
+     background-color: #ddeffb;
+     color: #2dabff;
+   }
+  
+   .no-work-class {
+     text-align: center;
+     color: #cacaca;
+   }
+  
+   .icon-class {
+     font-size: 20px;
+     margin-bottom: 20px;
+   }
+  
+   /* 侧边弹窗 */
+   .add-btn-class {
+     margin: 10px;
+     float: right;
+   }
+  
+   .change-date-drawer-class .el-calendar__body {
+     height: 45%;
+   }
+  
+   .change-date-drawer-class .day-content-class {
+     height: 30px
+   }
+  
+   .disabled-date-class {
+     color: #ccc;
+     pointer-events: none;
+   }
+ </style>

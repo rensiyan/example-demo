@@ -1,60 +1,140 @@
 <template>
-    <div class="common-layout">
-        <el-container>
-            <el-header>Header</el-header>
-            <el-container>
-                <el-aside width="200px">
-                    <el-menu
-                        active-text-color="#ffd04b"
-                        background-color="#545c64"
-                        class="el-menu-vertical-demo"
-                        default-active="2"
-                        text-color="#fff"
-                        @open="handleOpen"
-                        @close="handleClose"
-                    >
-                    
-                        <el-sub-menu index="1">
-                            <template #title>
-                                <el-icon><location /></el-icon>
-                                <span>Navigator One</span>
-                            </template>
-                            <el-menu-item-group title="Group One">
-                                <el-menu-item index="1-1">item one</el-menu-item>
-                                <el-menu-item index="1-2">item two</el-menu-item>
-                            </el-menu-item-group>
-                            <el-menu-item-group title="Group Two">
-                                <el-menu-item index="1-3">item three</el-menu-item>
-                            </el-menu-item-group>
-                            <el-sub-menu index="1-4">
-                                <template #title>item four</template>
-                                <el-menu-item index="1-4-1">item one</el-menu-item>
-                            </el-sub-menu>
-                        </el-sub-menu>
-                        <el-menu-item index="2">
-                            <el-icon><icon-menu /></el-icon>
-                            <span>Navigator Two</span>
-                        </el-menu-item>
-                        <el-menu-item index="3" disabled>
-                            <el-icon><document /></el-icon>
-                            <span>Navigator Three</span>
-                        </el-menu-item>
-                        <el-menu-item index="4">
-                            <el-icon><setting /></el-icon>
-                            <span>Navigator Four</span>
-                        </el-menu-item>
-                    </el-menu>
-                </el-aside>
-                <el-main>Main</el-main>
-            </el-container>
-        </el-container>
+    <div class="page">
+        输入月份数字<input v-model="inputVal" type="text" /><button @click="change">点击</button>
+        <ul class="calendar">
+            <li class="header">
+                {{ new Date().getFullYear() + '年' + (currentMonth + 1) + '月' }}
+            </li>
+            <li class="week">
+                <p>日</p>
+                <p>一</p>
+                <p>二</p>
+                <p>三</p>
+                <p>四</p>
+                <p>五</p>
+                <p>六</p>
+            </li>
+            <li class="row day">
+                <span class="prevDay date" v-for="item in prevDays" :key="'A' + item">{{ item }}</span>
+                <span v-for="item in currentDays" :key="'B' + item" class="nowDay date">{{ item }}</span>
+                <span class="nextDay date" v-for="item in nextDays" :key="'A' + item">{{ item }}</span>
+            </li>
+        </ul>
     </div>
 </template>
 
-<script lang="ts" setup></script>
-<style>
-    .common-layout {
-        width: 100%;
-        height: 100%;
+<script>
+    export default {
+        data() {
+            return {
+                week: ['日', '一', '二', '三', '四', '五', '六'],
+                currentDay: new Date().getDate(),
+                currentMonth: new Date().getMonth(),
+                currentYear: new Date().getFullYear(),
+                inputVal: '',
+            };
+        },
+        computed: {
+            currentMonthChinese() {
+                return new Date(this.currentYear, this.currentMonth).toLocaleString('default', { month: 'short' });
+            },
+            currentDays() {
+                return new Date(this.currentYear, this.currentMonth + 1, 0).getDate();
+            },
+            prevDays() {
+                let data = new Date(this.currentYear, this.currentMonth, 0).getDate();
+                let num = new Date(this.currentYear, this.currentMonth, 1).getDay();
+                var days = [];
+                while (num > 0) {
+                    days.push(data--);
+                    num--;
+                }
+                return days.sort();
+            },
+            nextDays() {
+                const m = this.currentMonth + 1;
+                let num = new Date(this.currentYear, m, 1).getDay();
+                var days = [];
+                let number = 0;
+                while (num < 7) {
+                    number++;
+                    days.push(number);
+                    num++;
+                }
+                return days.sort();
+            },
+        },
+        methods: {
+            change() {
+                this.currentMonth = Number(this.inputVal) - 1;
+            },
+        },
+    };
+</script>
+
+<style lang="scss">
+    .calendar {
+        width: 730px;
+        .header {
+            display: flex;
+            align-items: center;
+            height: 64px;
+            background: #f9f9f9;
+            border-radius: 4px 4px 0px 0px;
+            border: 2px solid #f4f4f4;
+            font-size: 28px;
+            font-family: PingFangSC-Semibold, PingFang SC;
+            font-weight: 600;
+            color: #404040;
+            padding-left: 20px;
+        }
+        .week {
+            display: flex;
+            height: 64px;
+            background: #fefefe;
+            border: 2px solid #f4f4f4;
+            font-size: 24px;
+            font-family: PingFangSC-Regular, PingFang SC;
+            font-weight: 400;
+            color: #404040;
+            p {
+                width: 100px;
+                height: 64px;
+            }
+        }
+        .row {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+        }
+        .day {
+            -webkit-box-pack: start;
+            -ms-flex-pack: start;
+            justify-content: flex-start;
+            -ms-flex-wrap: wrap;
+            flex-wrap: wrap;
+            span {
+                width: 100px;
+                height: 30px;
+                line-height: 30px;
+                text-align: center;
+            }
+            .date {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 100px;
+                height: 94px;
+                background: #fefefe;
+                border: 2px solid #f4f4f4;
+                font-size: 28px;
+                font-family: PingFangSC-Medium, PingFang SC;
+                font-weight: 500;
+                color: #9b9b9b;
+            }
+            .nowDay {
+                background: #404040;
+            }
+        }
     }
 </style>
