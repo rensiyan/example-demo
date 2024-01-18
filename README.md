@@ -36,6 +36,6 @@ See [Configuration Reference](https://cli.vuejs.org/config/).
 
 git push --set-upstream origin main
 
-### 拉取远程代码
+### 拉取远程代码v
 
 git pull --rebase origin main
