@@ -1,8 +1,8 @@
 <template>
     <div>
-        <Calendar v-model="value"  :locale="locale" @on-next="onNext" @on-type-change="onTypeChange">
+        <Calendar v-model="value"  :locale="locale" hide-type="true" @on-next="onNext" @on-today="onToday">
             <template #month="{ data }">
-                <div v-if="data.day === '2023-12-11'">
+                <div v-if="data.day === '2024-1-11'">
                     <div
                         style="
                             background-color: rgb(228, 23, 190);
@@ -45,7 +45,7 @@
                     <div style="width: 100px; display: flex; flex-wrap: nowrap">
                         <Button>上个月</Button>
                         <Button>本月</Button>
-                        <Button @click="btn('next')">下个月</Button>
+                        <Button  @click="onNext">下个月</Button>
                     </div>
                 </div>
             </template> -->
@@ -56,19 +56,21 @@
     const value = new Date();
     const locale = {
         today: '今天',
+        type: {
+        month: '月'
+    },
         weekDays: ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'],
     };
-    const onNext = (data) => {
-      console.log(data);
-      
-        debugger;
-    };
-    const btn = (type) => {
-       console.log(type,"type");
-       
-        onNext();
-    };
-    const onTypeChange = () => {
-        debugger;
-    };
+const onNext=()=>{
+    console.log('next',);
+
+}
+const change=()=>{
+    console.log('change');
+
+}
+const onToday=()=>{
+    console.log('s');
+    
+}
 </script>
