@@ -1,4 +1,4 @@
-<template>
+<!-- <template>
     <div>
         <Calendar v-model="value"  :locale="locale" hide-type="true" @on-next="onNext" @on-today="onToday">
             <template #month="{ data }">
@@ -36,7 +36,7 @@
                         <div style="background-color: rgb(0, 136, 255)">夜班：李四：产线2</div>
                     </div>
                 </div>
-            </template>
+            </template> -->
             <!-- <template #header>
                 <div style="display: flex; justify-content: space-between; width: 90%">
                     <div>
@@ -49,10 +49,10 @@
                     </div>
                 </div>
             </template> -->
-        </Calendar>
+        <!-- </Calendar>
     </div>
-</template>
-<script lang="ts" setup>
+</template> -->
+<!-- <script lang="ts" setup>
     const value = new Date();
     const locale = {
         today: '今天',
@@ -73,4 +73,38 @@ const onToday=()=>{
     console.log('s');
     
 }
-</script>
+</script> -->
+<template>
+   <button id="moveButton">点击移动</button>
+<div id="movingDiv">我会移动</div>
+  </template>
+   
+   <script lang='ts' setup>
+import{onMounted} from "vue"
+ onMounted(() => {
+    document.getElementById('moveButton').addEventListener('click', function() {
+  var div = document.getElementById('movingDiv');
+  div.classList.add('move-animation');
+  
+  // 过了动画时长后移除类来实现返回原位
+  setTimeout(function() {
+    div.classList.remove('move-animation');
+  }, 1000);
+ })
+
+});
+  </script>
+   
+  <style>
+#movingDiv {
+  width: 100px;
+  height: 100px;
+  background-color: #f00;
+  position: absolute;
+  transition: transform 1s;
+}
+ 
+.move-animation {
+  transform: translateX(100px);
+}
+  </style>

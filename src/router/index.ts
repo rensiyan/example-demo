@@ -19,6 +19,21 @@ const routes: Array<RouteRecordRaw> = [
     path: '/Demo',
     name: 'DemoView',
     component: () => import('../views/DemoView.vue')
+  },
+  {
+    path: '/responseLayout',
+    name: 'responseLayout',
+    component: () => import('../views/responseLayout.vue')
+  },
+  {
+    path: '/swiper',
+    name: 'swiper',
+    component: () => import('../views/swiper.vue')
+  },
+  {
+    path: '/carousel',
+    name: 'carousel',
+    component: () => import('../views/carousel.vue')
   }
 ]
 
