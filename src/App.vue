@@ -26,7 +26,7 @@
                       Item 3
                   </template>
                   <MenuItem name="3-1" to="./carousel">Option 1</MenuItem>
-                  <MenuItem name="3-2">Option 2</MenuItem>
+                  <MenuItem name="3-2" to='./importDrawer'>Option 2</MenuItem>
               </Submenu>
           </Menu>
       </Sider>

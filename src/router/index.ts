@@ -21,6 +21,11 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('../views/DemoView.vue')
   },
   {
+    path: '/importDrawer',
+    name: 'importDrawer',
+    component: () => import('../views/drawer/importDrawer.vue')
+  },
+  {
     path: '/responseLayout',
     name: 'responseLayout',
     component: () => import('../views/responseLayout.vue')
