@@ -1,15 +1,15 @@
 <template>
   <Button size="large" type="primary" @click="getUploadData">上传</Button>
+  <Button size="large" type="primary" @click="changeShow">展示</Button>
+
+  <el-input placeholder="ewewewee" v-show="isShow == 0"></el-input>
+  <el-input placeholder="反对法地方" v-show="isShow == 1"></el-input>
+  <el-input placeholder="dsds" v-show="isShow == 2"></el-input>
+
   <CDrawer :drawerVal='openDrawer.value' :selectedData="selectedData" :className="openDrawer.class" :width="'750px'"
     :title="openDrawer.title" @closeDrawer='closeDrawer' @onEmpty="onEmpty" @deleteItem="deleteItem">
-    <vxe-table border style="width: 500px;" ref="tableRef" :data="tableData" @checkbox-all="selectAllChangeEvent"
-      @checkbox-change="selectChangeEvent">
-      <vxe-column type="checkbox" width="60"></vxe-column>
-      <vxe-column field="name" title="Name"></vxe-column>
-      <vxe-column field="sex" title="Sex"></vxe-column>
-      <vxe-column field="age" title="Age"></vxe-column>
-      <vxe-column field="address" title="Address" show-overflow></vxe-column>
-    </vxe-table>
+
+
 
   </CDrawer>
 
@@ -30,7 +30,10 @@ interface RowVO {
   age: number
   address: string
 }
-
+const isShow = ref(0)
+const changeShow = () => {
+  isShow.value = isShow.value + 1
+}
 const tableRef = ref<VxeTableInstance<RowVO>>()
 const selectedData = ref()
 const tableData = ref<RowVO[]>([

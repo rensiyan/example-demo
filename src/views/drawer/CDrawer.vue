@@ -18,7 +18,8 @@
         </div>
         <div style="display: flex;">
           <div v-for="(item, index) in props.selectedData" :key="index"
-            style="width: 40px;height: 40px;border: 1px solid grey;margin:5px" @click="deleteItem(index)">{{ item.name }}
+            style="width: 40px;height: 40px;border: 1px solid grey;margin:5px" @click="deleteItem(index)">{{ item.name
+            }}
           </div>
         </div>
       </div>
@@ -76,13 +77,13 @@ const props = defineProps({
 
 })
 
-const emits = defineEmits(['closeDrawer', 'visibleChange', 'onEmpty','deleteItem'])
+const emits = defineEmits(['closeDrawer', 'visibleChange', 'onEmpty', 'deleteItem'])
 
 const onEmpty = () => {
   emits('onEmpty', 0)
 }
 const deleteItem = (index: number) => {
-  emits('deleteItem',index)
+  emits('deleteItem', index)
 }
 
 const closeDrawer = () => {//关闭抽屉时触发
